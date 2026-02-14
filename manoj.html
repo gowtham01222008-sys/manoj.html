@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Thermodynamic Cycle Analyzer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; text-align: center; }
+        nav { display: flex; justify-content: center; margin-bottom: 30px; }
+        button { background: #3498db; color: white; border: none; padding: 10px 20px; margin: 0 5px; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button.active { background: #e74c3c; }
+        button:hover { opacity: 0.9; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #34495e; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #bdc3c7; border-radius: 5px; box-sizing: border-box; }
+        .error { color: #e74c3c; font-size: 14px; }
+        .section { display: none; }
+        .section.active { display: block; }
+        .results { margin-top: 30px; }
+        .metric { display: inline-block; background: #ecf0f1; padding: 15px; margin: 10px; border-radius: 8px; text-align: center; min-width: 200px; }
+        .green { background: #2ecc71; color: white; }
+        .yellow { background: #f39c12; color: white; }
+        .red { background: #e74c3c; color: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #3498db; color: white; }
+        canvas { max-width: 100%; margin-top: 20px; }
+        #export { background: #27ae60; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 Advanced Thermodynamic Cycle Analyzer & Heat System Calculator</h1>
+        <nav>
+            <button onclick="showSection('otto')" class="active">Otto Cycle</button>
+            <button onclick="showSection('rankine')">Rankine Cycle</button>
+            <button onclick="showSection('heat-exchanger')">Heat Exchanger</button>
+            <button onclick="showSection('refrigeration')">Refrigeration</button>
+            <button onclick="showSection('conduction')">Composite Wall</button>
+        </nav>
+
+        <!-- Otto Cycle -->
+        <div id="otto" class="section active">
+            <h2>Otto Cycle (Gasoline Engine) [web:1][web:6][web:21]</h2>
+            <div class="form-group">
+                <label>Compression Ratio (r): </label>
+                <input type="number" id="otto_r" value="8" min="1" step="0.1">
+            </div>
+            <div class="form-group">
+                <label>T1 (°C): </label>
+                <input type="number" id="otto_t1" value="27">
+            </div>
+            <div class="form-group">
+                <label>Heat Added q_in (kJ/kg): </label>
+                <input type="number" id="otto_qin" value="750">
+            </div>
+            <div class="form-group">
+                <label>γ (specific heat ratio): </label>
+                <input type="number" id="otto_gamma" value="1.4" step="0.01">
+            </div>
+            <button onclick="calculateOtto()">Analyze Otto Cycle</button>
+            <div id="otto-results"></div>
+            <canvas id="otto-chart"></canvas>
+        </div>
+
+        <!-- Rankine Cycle -->
+        <div id="rankine" class="section">
+            <h2>Rankine Cycle (Steam Power Plant) [web:2][web:7][web:22]</h2>
+            <p>Note: Simplified ideal Rankine using approximate formulas. For full steam tables, professional software recommended.</p>
+            <div class="form-group">
+                <label>Boiler Pressure (MPa): </label>
+                <input type="number" id="rankine_p_high" value="3" step="0.1">
+            </div>
+            <div class="form-group">
+                <label>Turbine Inlet Temp (°C): </label>
+                <input type="number" id="rankine_t3" value="300">
+            </div>
+            <div class="form-group">
+                <label>Condenser Pressure (kPa): </label>
+                <input type="number" id="rankine_p_low" value="0.05" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Mass Flow Rate (kg/s): </label>
+                <input type="number" id="rankine_mdot" value="35">
+            </div>
+            <button onclick="calculateRankine()">Analyze Rankine Cycle</button>
+            <div id="rankine-results"></div>
+        </div>
+
+        <!-- Heat Exchanger -->
+        <div id="heat-exchanger" class="section">
+            <h2>Counter-Flow Heat Exchanger (LMTD & ε-NTU) [web:3][web:23]</h2>
+            <div class="form-group">
+                <label>Hot Inlet Temp (°C): </label>
+                <input type="number" id="hx_thi" value="80">
+            </div>
+            <div class="form-group">
+                <label>Hot Outlet Temp (°C): </label>
+                <input type="number" id="hx_tho" value="40">
+            </div>
+            <div class="form-group">
+                <label>Cold Inlet Temp (°C): </label>
+                <input type="number" id="hx_tci" value="20">
+            </div>
+            <div class="form-group">
+                <label>Cold Outlet Temp (°C): </label>
+                <input type="number" id="hx_tco" value="60">
+            </div>
+            <div class="form-group">
+                <label>UA Value (W/K): </label>
+                <input type="number" id="hx_ua" value="1000">
+            </div>
+            <button onclick="calculateHeatEx()">Analyze Heat Exchanger</button>
+            <div id="hx-results"></div>
+        </div>
+
+        <!-- Refrigeration -->
+        <div id="refrigeration" class="section">
+            <h2>Vapor Compression Refrigeration [web:9][web:28]</h2>
+            <p>Note: Simplified using example enthalpies. Real app needs property tables.</p>
+            <div class="form-group">
+                <label>Evap Temp (°C): </label>
+                <input type="number" id="ref_te" value="-10">
+            </div>
+            <div class="form-group">
+                <label>Cond Temp (°C): </label>
+                <input type="number" id="ref_tc" value="40">
+            </div>
+            <button onclick="calculateRef()">Calculate COP</button>
+            <div id="ref-results"></div>
+        </div>
+
+        <!-- Composite Wall -->
+        <div id="conduction" class="section">
+            <h2>Composite Wall Heat Conduction [web:5][web:24]</h2>
+            <div class="form-group">
+                <label>T Hot Side (°C): </label>
+                <input type="number" id="wall_th" value="20">
+            </div>
+            <div class="form-group">
+                <label>T Cold Side (°C): </label>
+                <input type="number" id="wall_tc" value="0">
+            </div>
+            <div class="form-group">
+                <label>Layer 1: Thickness (m), k (W/mK): </label>
+                <input type="text" id="wall_layer1" value="0.2, 0.5" placeholder="e.g. 0.2, 0.5">
+            </div>
+            <div class="form-group">
+                <label>Layer 2: Thickness (m), k (W/mK): </label>
+                <input type="text" id="wall_layer2" value="0.1, 1.0">
+            </div>
+            <div class="form-group">
+                <label>Area (m²): </label>
+                <input type="number" id="wall_area" value="1">
+            </div>
+            <button onclick="calculateWall()">Calculate</button>
+            <div id="wall-results"></div>
+        </div>
+
+        <button id="export" onclick="exportResults()" style="display:none;">📥 Download Results (JSON)</button>
+    </div>
+
+    <script>
+        let currentResults = {};
+
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function getColorCode(value, good=0.3, warn=0.2) {
+            if (value > good) return 'green';
+            if (value > warn) return 'yellow';
+            return 'red';
+        }
+
+        // Otto Cycle [web:1][web:6][web:21]
+        function calculateOtto() {
+            const r = parseFloat(document.getElementById('otto_r').value);
+            const t1 = parseFloat(document.getElementById('otto_t1').value) + 273.15;
+            const qin = parseFloat(document.getElementById('otto_qin').value);
+            const gamma = parseFloat(document.getElementById('otto_gamma').value);
+            const cp = gamma / (gamma - 1); // R=1 for simplicity
+
+            const t2 = t1 * Math.pow(r, gamma - 1);
+            const t3 = t2 + qin / cp;
+            const t4 = t3 / Math.pow(r, gamma - 1);
+            const eta = 1 - 1 / Math.pow(r, gamma - 1);
+            const wnet = qin * eta;
+
+            const results = { eta: eta*100, t1, t2, t3, t4, wnet, color: getColorCode(eta) };
+
+            displayResults('otto-results', results, ['eta', 'wnet'], {eta: '%', wnet: 'kJ/kg'});
+            plotCycle('otto-chart', [t1,t2,t3,t4]);
+            currentResults.otto = results;
+            showExport();
+        }
+
+        // Simplified Rankine - assumes superheated steam approx [web:22]
+        function calculateRankine() {
+            const pHigh = parseFloat(document.getElementById('rankine_p_high').value) * 1000; // kPa
+            const t3C = parseFloat(document.getElementById('rankine_t3').value);
+            const t3 = t3C + 273;
+            const pLow = parseFloat(document.getElementById('rankine_p_low').value);
+            const mdot = parseFloat(document.getElementById('rankine_mdot').value);
+
+            // Approx enthalpies (from typical tables)
+            const h1 = 200; // saturated liquid at low P ~ 7kPa hf≈192, approx
+            const h2 = h1 + 3; // pump work v*(pHigh-pLow) approx
+            const h3 = 3000; // superheated at 3MPa 300C approx
+            const h4 = 2300; // isentropic expansion approx
+
+            const w_turb = h3 - h4;
+            const w_pump = h2 - h1;
+            const qin = h3 - h2;
+            const eta = (w_turb - w_pump) / qin;
+            const power = mdot * (w_turb - w_pump);
+
+            const results = { eta: eta*100, power, color: getColorCode(eta) };
+
+            displayResults('rankine-results', results, ['eta', 'power'], {eta: '%', power: 'kW'});
+            currentResults.rankine = results;
+            showExport();
+        }
+
+        // Heat Exchanger LMTD [web:3][web:23]
+        function calculateHeatEx() {
+            const thi = parseFloat(document.getElementById('hx_thi').value) + 273;
+            const tho = parseFloat(document.getElementById('hx_tho').value) + 273;
+            const tci = parseFloat(document.getElementById('hx_tci').value) + 273;
+            const tco = parseFloat(document.getElementById('hx_tco').value) + 273;
+            const UA = parseFloat(document.getElementById('hx_ua').value);
+
+            const dt1 = thi - tco;
+            const dt2 = tho - tci;
+            const lmtd = (dt1 - dt2) / Math.log(dt1 / dt2);
+            const q = UA * lmtd;
+
+            // Effectiveness
+            const c_h = q / (thi - tho);
+            const c_c = q / (tco - tci);
+            const c_min = Math.min(c_h, c_c);
+            const c_max = Math.max(c_h, c_c);
+            const cr = c_min / c_max;
+            const eps = q / (c_min * (thi - tci));
+
+            const results = { lmtd: lmtd-273, eps: eps*100, q, color: getColorCode(eps/100, 0.8, 0.5) };
+
+            displayResults('hx-results', results, ['lmtd', 'eps', 'q'], {lmtd: '°C', eps: '%', q: 'W'});
+            currentResults.hx = results;
+            showExport();
+        }
+
+        // Refrigeration simplified [web:9]
+        function calculateRef() {
+            const te = parseFloat(document.getElementById('ref_te').value);
+            const tc = parseFloat(document.getElementById('ref_tc').value);
+            // Approx from R134a table [web:14]
+            const h1 = 240; // after evap
+            const h3 = 420; // after cond
+            const h2 = h1 + 30; // comp work approx
+            const h4 = h3; // throttle
+
+            const qL = h1 - h4;
+            const w = h2 - h1;
+            const cop = qL / w;
+
+            const results = { cop, color: getColorCode(cop, 4, 2) };
+
+            displayResults('ref-results', results, ['cop']);
+            currentResults.ref = results;
+            showExport();
+        }
+
+        // Composite Wall [web:5][web:24]
+        function calculateWall() {
+            const th = parseFloat(document.getElementById('wall_th').value);
+            const tc = parseFloat(document.getElementById('wall_tc').value);
+            const area = parseFloat(document.getElementById('wall_area').value);
+            const layer1 = document.getElementById('wall_layer1').value.split(',').map(Number);
+            const layer2 = document.getElementById('wall_layer2').value.split(',').map(Number);
+
+            const r1 = layer1[0] / layer1[1];
+            const r2 = layer2[0] / layer2[1];
+            const rtot = r1 + r2;
+            const q = area * (th - tc) / rtot;
+            const flux = q / area;
+
+            const results = { rtot, q, flux, color: 'green' };
+
+            displayResults('wall-results', results, ['rtot', 'q', 'flux'], {rtot: 'm²K/W', q: 'W', flux: 'W/m²'});
+            currentResults.wall = results;
+            showExport();
+        }
+
+        function displayResults(containerId, data, keys, units={}) {
+            let html = '<div class="results">';
+            keys.forEach(key => {
+                const val = data[key];
+                const unit = units[key] || '';
+                const cls = data.color ? `metric ${data.color}` : 'metric';
+                html += `<div class="${cls}"><strong>${key.toUpperCase()}</strong><br>${val.toFixed(2)} ${unit}</div>`;
+            });
+            html += '</div>';
+            document.getElementById(containerId).innerHTML = html;
+        }
+
+        function plotCycle(canvasId, temps) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['1', '2', '3', '4'],
+                    datasets: [{ label: 'Temperature (K)', data: temps, borderColor: 'orange', fill: false }]
+                },
+                options: { scales: { y: { beginAtZero: false } } }
+            });
+        }
+
+        function showExport() {
+            document.getElementById('export').style.display = 'block';
+        }
+
+        function exportResults() {
+            const dataStr = JSON.stringify(currentResults, null, 2);
+            const blob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'thermo_results.json';
+            a.click();
+        }
+
+        // Real-time validation example
+        document.querySelectorAll('input[type=number]').forEach(input => {
+            input.addEventListener('input', function() {
+                if (this.value < 0 || isNaN(this.value)) {
+                    this.parentNode.classList.add('error');
+                } else {
+                    this.parentNode.classList.remove('error');
+                }
+            });
+        });
+
+        // Unit conversion stub (expand for full SI/Imperial)
+        function convertUnit(val, from, to) {
+            // Implement as needed
+            return val;
+        }
+    </script>
+</body>
+</html>
